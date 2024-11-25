@@ -207,8 +207,7 @@ var lyricsCmd = &cobra.Command{
 	Use:   "lyrics",
 	Short: "Lyrics modules for ",
 	Run: func(cmd *cobra.Command, args []string) {
-		encoder := json.NewEncoder(os.Stdout)
-		encoder.SetEscapeHTML(false)
+		viper.BindPFlag("init", cmd.Flags().Lookup("init"))
 
 		if viper.GetBool("init") {
 			fmt.Println("Put the following object in your waybar config.")
@@ -224,12 +223,15 @@ var lyricsCmd = &cobra.Command{
 		"lyric": "",
 	},
 	"exec-if": "which ewmod",
-	"exec": "ewmod lyrics --max-length 70",
+	"exec": "ewmod lyrics --max-length 100",
 	"on-click": "ewmod lyrics --toggle",
 },
 `)
 			os.Exit(0)
 		}
+
+		encoder := json.NewEncoder(os.Stdout)
+		encoder.SetEscapeHTML(false)
 
 		lockFile := filepath.Join(os.TempDir(), "EWM-Lyrics.lock")
 		file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0666)
@@ -401,8 +403,8 @@ func init() {
 	rootCmd.AddCommand(lyricsCmd)
 	lyricsCmd.Flags().Bool("init", false, "Print json code to initialize this module to waybar")
 	lyricsCmd.Flags().Bool("toggle", false, "Play if paused. Pause if playing")
-	lyricsCmd.MarkFlagsMutuallyExclusive("init", "toggle")
 	lyricsCmd.Flags().Int32("max-length", 100, "Truncate lyric line up to specific length")
+	lyricsCmd.MarkFlagsMutuallyExclusive("init", "toggle", "max-length")
 
 	lyricsCmd.Flags().VisitAll(func(f *pflag.Flag) {
 		viper.BindPFlag(f.Name, f)

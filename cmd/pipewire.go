@@ -28,6 +28,8 @@ var pipewireCmd = &cobra.Command{
 	Use:   "pipewire",
 	Short: "Pipewire module for waybar",
 	Run: func(cmd *cobra.Command, args []string) {
+		viper.BindPFlag("init", cmd.Flags().Lookup("init"))
+
 		init := viper.GetBool("init")
 		mute := viper.GetBool("mute")
 		up := viper.GetInt("up")
