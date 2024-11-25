@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,8 +45,8 @@ type (
 	}
 
 	LyricLine struct {
-		Timestamp float64 `json:"timestamp"`
-		Text      string  `json:"text"`
+		Timestamp float64
+		Text      string
 	}
 )
 
@@ -54,19 +55,10 @@ func fetchLyrics(url string, uri string) ([]LyricLine, error) {
 	cacheDir := filepath.Join(userCacheDir, "EWM-Lyrics")
 
 	uri = strings.ReplaceAll(uri, "/", "-")
-	cacheFile := filepath.Join(cacheDir, uri+".json")
+	cacheFile := filepath.Join(cacheDir, uri+".csv")
 
-	if _, err := os.Stat(cacheFile); err == nil {
-		data, err := os.ReadFile(cacheFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read cache file: %w", err)
-		}
-
-		var cachedLyrics []LyricLine
-		if err := json.Unmarshal(data, &cachedLyrics); err != nil {
-			return nil, fmt.Errorf("failed to parse cached lyrics: %w", err)
-		}
-		return cachedLyrics, nil
+	if cahcedLyrics, err := loadCache(cacheFile); err == nil {
+		return cahcedLyrics, nil
 	}
 
 	resp, err := http.Get(url)
@@ -103,13 +95,9 @@ func fetchLyrics(url string, uri string) ([]LyricLine, error) {
 		return nil, fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
-	lyricsJSON, err := json.Marshal(lyrics)
+	err = saveCache(lyrics, cacheFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize lyrics to JSON: %w", err)
-	}
-
-	if err := os.WriteFile(cacheFile, lyricsJSON, 0644); err != nil {
-		return nil, fmt.Errorf("failed to write cache file: %w", err)
+		return nil, fmt.Errorf("failed to cache lyrics to psudo csv: %w", err)
 	}
 
 	return lyrics, nil
@@ -154,6 +142,53 @@ func parseTimestamp(ts string) (float64, error) {
 	}
 
 	return seconds, nil
+}
+
+func saveCache(lines []LyricLine, filePath string) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for _, line := range lines {
+		_, err := fmt.Fprintf(file, "%.6f,%s\n", line.Timestamp, line.Text)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func loadCache(filePath string) ([]LyricLine, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []LyricLine
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, ",", 2)
+		if len(parts) != 2 {
+			continue // Skip invalid lines
+		}
+
+		timestamp, err := strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			return nil, err
+		}
+
+		lines = append(lines, LyricLine{Timestamp: timestamp, Text: parts[1]})
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return lines, nil
 }
 
 func truncate(input string, limit int) string {
