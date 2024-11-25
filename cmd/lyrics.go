@@ -51,6 +51,12 @@ type (
 )
 
 func fetchLyrics(url string, uri string) ([]LyricLine, error) {
+	lyricsNotFoundFile := filepath.Join(os.TempDir(), "EWM-Lyrics-404-"+uri)
+
+	if _, err := os.Stat(lyricsNotFoundFile); err == nil {
+		return nil, fmt.Errorf("Lyrics not found (cached)")
+	}
+
 	userCacheDir, _ := os.UserCacheDir()
 	cacheDir := filepath.Join(userCacheDir, "EWM-Lyrics")
 
@@ -61,11 +67,18 @@ func fetchLyrics(url string, uri string) ([]LyricLine, error) {
 		return cahcedLyrics, nil
 	}
 
+	Debug("Lyrics", "Fetching lyrics from LRCLIB")
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch lyrics: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		os.WriteFile(lyricsNotFoundFile, []byte(url), 644)
+		return nil, fmt.Errorf("Lyrics not found")
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected HTTP status: %d", resp.StatusCode)
@@ -275,6 +288,7 @@ var lyricsCmd = &cobra.Command{
 
 		if playerName == "" {
 			Debug("Lyrics", "failed to find player")
+			os.Exit(1)
 		}
 
 		player := mpris.New(conn, playerName)
