@@ -1,33 +1,71 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
 	cfgFile string
 	Version = "Git"
+
+	logFile   *os.File
+	logWriter *bufio.Writer
 )
 
 var rootCmd = &cobra.Command{Use: "ewmod", Version: Version, Short: "Ephemeral's waybar modules"}
 
 func Execute() {
+	defer logFile.Close()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
 
+func init() {
+	viper.SetEnvPrefix("ewm")
+	viper.BindEnv("log_file")
+	logFilePath := viper.GetString("log_file")
+
+	fmt.Fprintln(os.Stderr, logFilePath)
+
+	if logFilePath == "" {
+		fmt.Fprintln(os.Stderr, "No log file specified. Exiting.")
+		return
+	}
+
+	err := os.MkdirAll(filepath.Dir(logFilePath), os.ModePerm)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create log file directories: %v\n", err)
+		return
+	}
+
+	logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
+		return
+	}
+
+	logWriter = bufio.NewWriter(logFile)
+}
+
 func Debug(scope string, a ...any) {
-	fmt.Fprintf(os.Stderr, "[%s] ", scope)
-	fmt.Fprintln(os.Stderr, a...)
+	fmt.Fprintf(os.Stderr, "[%s] %v\n", scope, fmt.Sprint(a...))
+	if logFile != nil {
+		timestamp := time.Now().Format(time.RFC822)
+		fmt.Fprintf(logFile, "[%s] [%s] %v\n", timestamp, scope, fmt.Sprint(a...))
+	}
 }
 
 func RunCommand(bin string, args ...string) error {

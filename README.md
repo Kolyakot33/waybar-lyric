@@ -42,3 +42,7 @@ Put the following object in your waybar config.
 ```
 
 You can put this on your waybar `config.jsonc`
+
+#### Logging
+
+By default, EWM logs to `stderr`. You can export `EWM_LOG_FILE` to save log into a specific file.
