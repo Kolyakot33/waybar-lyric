@@ -20,9 +20,6 @@ cd EWM
 # To install of /usr/local/bin
 make install
 
-# To install in go path
-go install
-
 # To install in specific prefix (if prefix is /usr/ then install on /usr/bin/)
 make install PREFIX=/usr/
 ```
