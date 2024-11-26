@@ -56,7 +56,7 @@ func init() {
 	}
 }
 
-func Debug(scope string, a ...any) {
+func WriteLog(scope string, a ...any) {
 	fmt.Fprintf(os.Stderr, "[%s] %v\n", scope, fmt.Sprint(a...))
 	if logFile != nil {
 		timestamp := time.Now().UTC().Format(time.DateTime)

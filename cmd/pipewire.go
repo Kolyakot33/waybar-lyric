@@ -58,31 +58,31 @@ var pipewireCmd = &cobra.Command{
 		case mute:
 			err := RunCommand("wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
 			if err != nil {
-				Debug("pipewire", "Error toggling mute:", err)
+				WriteLog("pipewire", "Error toggling mute:", err)
 				os.Exit(1)
 			}
 
 			err = UpdateWaybar()
 			if err != nil {
-				Debug("pipewire", "Error updating waybar:", err)
+				WriteLog("pipewire", "Error updating waybar:", err)
 				os.Exit(1)
 			}
 		case up > 0:
 			err := RunCommand("wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", fmt.Sprintf("%d%%+", up))
 			if err != nil {
-				Debug("pipewire", "Error setting volume:", err)
+				WriteLog("pipewire", "Error setting volume:", err)
 				os.Exit(1)
 			}
 		case down > 0:
 			err := RunCommand("wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", fmt.Sprintf("%d%%-", down))
 			if err != nil {
-				Debug("pipewire", "Error setting volume:", err)
+				WriteLog("pipewire", "Error setting volume:", err)
 				os.Exit(1)
 			}
 		default:
 			vol, err := Output("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
 			if err != nil {
-				Debug("pipewire", "Error getting output:", err)
+				WriteLog("pipewire", "Error getting output:", err)
 				os.Exit(1)
 			}
 
@@ -90,7 +90,7 @@ var pipewireCmd = &cobra.Command{
 
 			percentage, err := strconv.ParseFloat(volFields[1], 64)
 			if err != nil {
-				Debug("pipewire", "Error converting string to float:", err)
+				WriteLog("pipewire", "Error converting string to float:", err)
 				os.Exit(1)
 			}
 			percentage = percentage * 100

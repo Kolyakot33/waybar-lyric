@@ -67,7 +67,7 @@ func fetchLyrics(url string, uri string) ([]LyricLine, error) {
 		return cahcedLyrics, nil
 	}
 
-	Debug("Lyrics", "Fetching lyrics from LRCLIB")
+	WriteLog("Lyrics", "Fetching lyrics from LRCLIB")
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -249,7 +249,7 @@ var lyricsCmd = &cobra.Command{
 		lockFile := filepath.Join(os.TempDir(), "EWM-Lyrics.lock")
 		file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0666)
 		if err != nil {
-			Debug("Lyrics", "Failed to open or create lock file:", err)
+			WriteLog("Lyrics", "Failed to open or create lock file:", err)
 			os.Exit(1)
 		}
 		defer file.Close()
@@ -257,10 +257,10 @@ var lyricsCmd = &cobra.Command{
 		err = syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 		if err != nil {
 			if err == syscall.EWOULDBLOCK {
-				Debug("Lyrics", "Another instance of the CLI is already running. Exiting.")
+				WriteLog("Lyrics", "Another instance of the CLI is already running. Exiting.")
 				os.Exit(0)
 			}
-			Debug("Lyrics", "Failed to acquire lock:", err)
+			WriteLog("Lyrics", "Failed to acquire lock:", err)
 			os.Exit(1)
 		}
 
@@ -268,12 +268,12 @@ var lyricsCmd = &cobra.Command{
 
 		conn, err := dbus.SessionBus()
 		if err != nil {
-			Debug("Lyrics", err)
+			WriteLog("Lyrics", err)
 			os.Exit(1)
 		}
 		names, err := mpris.List(conn)
 		if err != nil {
-			Debug("Lyrics", err)
+			WriteLog("Lyrics", err)
 			os.Exit(1)
 		}
 
@@ -287,7 +287,7 @@ var lyricsCmd = &cobra.Command{
 		}
 
 		if playerName == "" {
-			Debug("Lyrics", "failed to find player")
+			WriteLog("Lyrics", "failed to find player")
 			os.Exit(1)
 		}
 
@@ -301,13 +301,13 @@ var lyricsCmd = &cobra.Command{
 
 		meta, err := player.GetMetadata()
 		if err != nil {
-			Debug("Lyrics", err)
+			WriteLog("Lyrics", err)
 			os.Exit(1)
 		}
 
 		status, err := player.GetPlaybackStatus()
 		if err != nil {
-			Debug("Lyrics", err)
+			WriteLog("Lyrics", err)
 			os.Exit(1)
 		}
 
@@ -352,7 +352,7 @@ var lyricsCmd = &cobra.Command{
 
 		lyrics, err := fetchLyrics(url, uri)
 		if err != nil {
-			Debug("Lyrics", err)
+			WriteLog("Lyrics", err)
 			encoder.Encode(Lyrics{
 				Text:       fmt.Sprintf("%s - %s", artist, title),
 				Class:      "info",
