@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,8 +18,7 @@ var (
 	cfgFile string
 	Version = "Git"
 
-	logFile   *os.File
-	logWriter *bufio.Writer
+	logFile *os.File
 )
 
 var rootCmd = &cobra.Command{Use: "ewmod", Version: Version, Short: "Ephemeral's waybar modules"}
@@ -56,14 +54,12 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
 		return
 	}
-
-	logWriter = bufio.NewWriter(logFile)
 }
 
 func Debug(scope string, a ...any) {
 	fmt.Fprintf(os.Stderr, "[%s] %v\n", scope, fmt.Sprint(a...))
 	if logFile != nil {
-		timestamp := time.Now().Format(time.RFC822)
+		timestamp := time.Now().UTC().Format(time.DateTime)
 		fmt.Fprintf(logFile, "[%s] [%s] %v\n", timestamp, scope, fmt.Sprint(a...))
 	}
 }
