@@ -28,6 +28,10 @@ var pipewireCmd = &cobra.Command{
 	Use:   "pipewire",
 	Short: "Pipewire module for waybar",
 	Run: func(cmd *cobra.Command, args []string) {
+		Log = func(a ...any) {
+			WriteLog("PipeWire", a...)
+		}
+
 		viper.BindPFlag("init", cmd.Flags().Lookup("init"))
 
 		init := viper.GetBool("init")
@@ -58,31 +62,31 @@ var pipewireCmd = &cobra.Command{
 		case mute:
 			err := RunCommand("wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
 			if err != nil {
-				WriteLog("pipewire", "Error toggling mute:", err)
+				Log("Error toggling mute:", err)
 				os.Exit(1)
 			}
 
 			err = UpdateWaybar()
 			if err != nil {
-				WriteLog("pipewire", "Error updating waybar:", err)
+				WriteLog("Error updating waybar:", err)
 				os.Exit(1)
 			}
 		case up > 0:
 			err := RunCommand("wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", fmt.Sprintf("%d%%+", up))
 			if err != nil {
-				WriteLog("pipewire", "Error setting volume:", err)
+				WriteLog("Error setting volume:", err)
 				os.Exit(1)
 			}
 		case down > 0:
 			err := RunCommand("wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", fmt.Sprintf("%d%%-", down))
 			if err != nil {
-				WriteLog("pipewire", "Error setting volume:", err)
+				WriteLog("Error setting volume:", err)
 				os.Exit(1)
 			}
 		default:
 			vol, err := Output("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
 			if err != nil {
-				WriteLog("pipewire", "Error getting output:", err)
+				WriteLog("Error getting output:", err)
 				os.Exit(1)
 			}
 
@@ -90,7 +94,7 @@ var pipewireCmd = &cobra.Command{
 
 			percentage, err := strconv.ParseFloat(volFields[1], 64)
 			if err != nil {
-				WriteLog("pipewire", "Error converting string to float:", err)
+				WriteLog("Error converting string to float:", err)
 				os.Exit(1)
 			}
 			percentage = percentage * 100

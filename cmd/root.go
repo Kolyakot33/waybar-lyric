@@ -21,6 +21,10 @@ var (
 	logFile *os.File
 )
 
+var Log = func(a ...any) {
+	WriteLog("EWM", a...)
+}
+
 var rootCmd = &cobra.Command{Use: "ewmod", Version: Version, Short: "Ephemeral's waybar modules"}
 
 func Execute() {
