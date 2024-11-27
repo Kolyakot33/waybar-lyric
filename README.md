@@ -6,6 +6,7 @@ Simple helper binary for my waybar configuration.
 
 -   Lyrics: Shows the lyrics of currently playing song. (only for Spotify)
 -   Pipewire: Simple volume controller for pipewire. (can be a shell script)
+-   Weather: Shows weather :p
 
 If you any cool idea of module, please create an issue I'll try my best to implement it.
 
