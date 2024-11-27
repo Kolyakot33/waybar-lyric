@@ -28,11 +28,10 @@ var pipewireCmd = &cobra.Command{
 	Use:   "pipewire",
 	Short: "Pipewire module for waybar",
 	Run: func(cmd *cobra.Command, args []string) {
+		viper.BindPFlag("init", cmd.Flags().Lookup("init"))
 		Log = func(a ...any) {
 			WriteLog("PipeWire", a...)
 		}
-
-		viper.BindPFlag("init", cmd.Flags().Lookup("init"))
 
 		init := viper.GetBool("init")
 		mute := viper.GetBool("mute")
@@ -41,8 +40,8 @@ var pipewireCmd = &cobra.Command{
 
 		switch {
 		case init:
-			fmt.Println("Put the following object in your waybar config.")
-			fmt.Print(`
+			fmt.Print(`Put the following object in your waybar config:
+
 "custom/pipewire": {
 	"interval": 1,
 	"signal": 4,

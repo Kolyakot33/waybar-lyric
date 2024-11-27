@@ -38,26 +38,25 @@ func Execute() {
 func init() {
 	viper.SetEnvPrefix("ewm")
 	viper.BindEnv("log_file")
-	logFilePath := viper.GetString("log_file")
 
-	fmt.Fprintln(os.Stderr, logFilePath)
+	logFilePath := viper.GetString("log_file")
 
 	if logFilePath == "" {
 		fmt.Fprintln(os.Stderr, "No log file specified. Exiting.")
 		return
 	}
 
-	err := os.MkdirAll(filepath.Dir(logFilePath), os.ModePerm)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Dir(logFilePath), os.ModePerm); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create log file directories: %v\n", err)
 		return
 	}
 
-	logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	file, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
 		return
 	}
+	logFile = file
 }
 
 func WriteLog(scope string, a ...any) {

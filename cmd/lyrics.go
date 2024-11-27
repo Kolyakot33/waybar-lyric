@@ -218,7 +218,7 @@ func truncate(input string, limit int) string {
 
 var lyricsCmd = &cobra.Command{
 	Use:   "lyrics",
-	Short: "Lyrics modules for ",
+	Short: "Lyrics modules for waybar",
 	Run: func(cmd *cobra.Command, args []string) {
 		Log = func(a ...any) {
 			WriteLog("Lyrics", a...)
@@ -227,8 +227,8 @@ var lyricsCmd = &cobra.Command{
 		viper.BindPFlag("init", cmd.Flags().Lookup("init"))
 
 		if viper.GetBool("init") {
-			fmt.Println("Put the following object in your waybar config.")
-			fmt.Print(`
+			fmt.Print(`Put the following object in your waybar config:
+
 "custom/lyrics": {
 	"interval": 1,
 	"signal": 4,

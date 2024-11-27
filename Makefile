@@ -26,5 +26,5 @@ install: build
 		cp -v "$(BIN_NAME)" "$(INSTALL_DIR)"; \
 	else \
 		sudo mkdir -pv "$(INSTALL_DIR)"; \
-		sudo cp "$(BIN_NAME)" "$(PREFIX)/bin/"; \
+		sudo cp "$(BIN_NAME)" "$(INSTALL_DIR)"; \
 	fi
