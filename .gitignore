@@ -1,3 +1,7 @@
 .*-stamp
 ewmod
 bin
+*.pkg.tar.zst
+ewm-git/
+pkg/
+src/
