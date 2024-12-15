@@ -51,14 +51,15 @@ type (
 )
 
 func fetchLyrics(url string, uri string) ([]LyricLine, error) {
-	lyricsNotFoundFile := filepath.Join(os.TempDir(), "EWM-Lyrics-404-"+uri)
+	notFoundTempDir := filepath.Join(os.TempDir(), "WayTune")
+	lyricsNotFoundFile := filepath.Join(notFoundTempDir, uri+"-not-found")
 
 	if _, err := os.Stat(lyricsNotFoundFile); err == nil {
 		return nil, fmt.Errorf("Lyrics not found (cached)")
 	}
 
 	userCacheDir, _ := os.UserCacheDir()
-	cacheDir := filepath.Join(userCacheDir, "EWM-Lyrics")
+	cacheDir := filepath.Join(userCacheDir, "WayTune-Lyrics")
 
 	uri = strings.ReplaceAll(uri, "/", "-")
 	cacheFile := filepath.Join(cacheDir, uri+".csv")
@@ -239,9 +240,9 @@ var lyricsCmd = &cobra.Command{
 		"paused": "",
 		"lyric": "",
 	},
-	"exec-if": "which ewmod",
-	"exec": "ewmod lyrics --max-length 100",
-	"on-click": "ewmod lyrics --toggle",
+	"exec-if": "which waytune",
+	"exec": "waytune lyrics --max-length 100",
+	"on-click": "waytune lyrics --toggle",
 },
 `)
 			os.Exit(0)
@@ -250,7 +251,7 @@ var lyricsCmd = &cobra.Command{
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
 
-		lockFile := filepath.Join(os.TempDir(), "EWM-Lyrics.lock")
+		lockFile := filepath.Join(os.TempDir(), "WayTune-Lyrics.lock")
 		file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0666)
 		if err != nil {
 			Log("Failed to open or create lock file:", err)

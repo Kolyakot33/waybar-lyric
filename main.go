@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Nadim147c/EWM/cmd"
+import "WayTune/cmd"
 
 func main() {
 	cmd.Execute()

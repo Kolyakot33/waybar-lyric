@@ -22,10 +22,14 @@ var (
 )
 
 var Log = func(a ...any) {
-	WriteLog("EWM", a...)
+	WriteLog("WayTune", a...)
 }
 
-var rootCmd = &cobra.Command{Use: "ewmod", Version: Version, Short: "Ephemeral's waybar modules"}
+var rootCmd = &cobra.Command{
+	Use:     "waytune",
+	Version: Version,
+	Short:   "A collection of custom  waybar modules",
+}
 
 func Execute() {
 	defer logFile.Close()
@@ -36,7 +40,7 @@ func Execute() {
 }
 
 func init() {
-	viper.SetEnvPrefix("ewm")
+	viper.SetEnvPrefix("waytune")
 	viper.BindEnv("log_file")
 
 	logFilePath := viper.GetString("log_file")

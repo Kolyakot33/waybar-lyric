@@ -51,11 +51,11 @@ var pipewireCmd = &cobra.Command{
 		"normal": ["", "", ""],
 		"muted": [" "],
 	},
-	"exec-if": "which ewmod",
-	"exec": "ewmod pipewire",
-	"on-click": "ewmod pipewire --mute",
-	"on-scroll-up": "ewmod pipewire --up 2",
-	"on-scroll-down": "ewmod pipewire --down 2",
+	"exec-if": "which waytune",
+	"exec": "waytune pipewire",
+	"on-click": "waytune pipewire --mute",
+	"on-scroll-up": "waytune pipewire --up 2",
+	"on-scroll-down": "waytune pipewire --down 2",
 },
 `)
 		case mute:

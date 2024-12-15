@@ -1,13 +1,11 @@
-APP_NAME := Ephemeral's Waybar Modules
-REPO_NAME := EWM
-BIN_NAME := ewmod
+APP_NAME := WayTune
+BIN_NAME := waytune
 
-PREFIX ?= /usr/local/
-VERSION ?= $(shell git describe --tags 2>/dev/null || echo "Git")
+VERSION ?= $(shell printf "r%s.%s" $(shell git rev-list --count HEAD) $(shell git rev-parse --short=7 HEAD) || echo "Git")
 
-INSTALL_DIR ?= $(shell printf '$(PREFIX)/bin/' | sed 's:/\+:/:g')
+PREFIX ?= /usr/local
 
-BUILD_FLAGS := -w -s -X github.com/Nadim147c/$(REPO_NAME)/cmd.Version=$(VERSION)
+BUILD_FLAGS := -w -s -X '$(APP_NAME)/cmd.Version=$(VERSION)'
 
 all: build
 
@@ -17,14 +15,20 @@ deps: .dependency-stamp
 	go get -v
 	@touch .dependency-stamp
 
-build: deps
-	go build -ldflags "$(BUILD_FLAGS)" -o "$(BIN_NAME)"
+build: $(BIN_NAME)
 
-install: build
-	if [ -w "$(INSTALL_DIR)" ]; then \
-		mkdir -pv "$(INSTALL_DIR)"; \
-		cp -v "$(BIN_NAME)" "$(INSTALL_DIR)"; \
-	else \
-		sudo mkdir -pv "$(INSTALL_DIR)"; \
-		sudo cp "$(BIN_NAME)" "$(INSTALL_DIR)"; \
+$(BIN_NAME): deps
+	go build -trimpath -ldflags "$(BUILD_FLAGS)" -o "$(BIN_NAME)"
+
+install:
+	@if [ ! -f "$(BIN_NAME)" ]; then \
+		echo "Error: $(BIN_NAME) not found. Run 'make' first."; \
+		exit 1; \
 	fi
+	@echo "Installing to '$(PREFIX)'..."
+	install -Dm755 $(BIN_NAME) "$(PREFIX)/bin/$(BIN_NAME)"
+	install -Dm644 README.md "$(PREFIX)/share/doc/$(APP_NAME)/README.md"
+	install -Dm644 LICENSE "$(PREFIX)/share/licenses/$(APP_NAME)/LICENSE"
+
+clean:
+	rm -f $(BIN_NAME) .dependency-stamp .build-stamp

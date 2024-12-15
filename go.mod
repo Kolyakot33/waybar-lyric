@@ -1,4 +1,4 @@
-module github.com/Nadim147c/EWM
+module WayTune
 
 go 1.23.3
 

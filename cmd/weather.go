@@ -36,7 +36,7 @@ type (
 )
 
 func fetchWeather(url string) (*WeatherResponse, error) {
-	cacheFile := filepath.Join(os.TempDir(), "EWM-Weather.json")
+	cacheFile := filepath.Join(os.TempDir(), "WayTune-Weather.json")
 	cacheDuration := 5 * time.Minute
 
 	if info, err := os.Stat(cacheFile); err == nil {
@@ -93,10 +93,10 @@ var weatherCmd = &cobra.Command{
 		}
 
 		if viper.GetBool("init") {
-			fmt.Print(`Create a file with location on your home directory with 'touch ~/.EWM-Weather'
-Put current location (latitude,longitude) in '~/.EWM-Weather'
+			fmt.Print(`Create a file with location on your home directory with 'touch ~/.WayTune-Weather'
+Put current location (latitude,longitude) in '~/.WayTune-Weather'
 
-For example: "echo '20.32,60.21' > ~/.EWM-Weather"
+For example: "echo '20.32,60.21' > ~/.WayTune-Weather"
 
 Put the following object in your waybar config:
 
@@ -114,8 +114,8 @@ Put the following object in your waybar config:
 		"snow": "",
 		"thunderstorm": "",
 	},
-	"exec-if": "which ewmod",
-	"exec": "ewmod weather --unit c",
+	"exec-if": "which waytune",
+	"exec": "waytune weather --unit c",
 },
 `)
 			os.Exit(0)
@@ -130,7 +130,7 @@ Put the following object in your waybar config:
 			os.Exit(1)
 		}
 
-		weatherFilePath := filepath.Join(home, ".EWM-Weather")
+		weatherFilePath := filepath.Join(home, ".WayTune-Weather")
 
 		weatherFile, err := os.Open(weatherFilePath)
 		if err != nil {

@@ -1,6 +1,6 @@
-# Ephemeral's Waybar Modules
+# WayTune
 
-Simple helper binary for my waybar configuration.
+A collection of custom waybar modules.
 
 ## Current supported modules
 
@@ -15,22 +15,28 @@ If you any cool idea of module, please create an issue I'll try my best to imple
 Prerequisite: `go`
 
 ```sh
-git clone https://github.com/Nadim147c/EWM
-cd EWM
+git clone https://github.com/Nadim147c/WayTune
+cd WayTune
 
-# To install of /usr/local/bin
+echo "Compiling..."
+make
+```
+
+```sh
 make install
+```
 
-# To install in specific prefix (if prefix is /usr/ then install on /usr/bin/)
-make install PREFIX=/usr/
+```sh
+# To install in specific prefix
+make install PREFIX=/usr
 ```
 
 ## Usages
 
-To find all the modules use `ewmod --help`. Here how to setup lyrics modules.
+To find all the modules use `waytune --help`. Here how to setup lyrics modules.
 
 ```
-$ ewmod lyrics --init
+$ waytune lyrics --init
 
 Put the following object in your waybar config.
 
@@ -43,4 +49,4 @@ You can put this on your waybar `config.jsonc`
 
 #### Logging
 
-By default, EWM logs to `stderr`. You can export `EWM_LOG_FILE` to save log into a specific file.
+By default, WayTune logs to `stderr`. You can export `WAYTUNE_LOG_FILE` to save log into a specific file.
