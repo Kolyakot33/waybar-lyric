@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Pauloo27/go-mpris"
 	"github.com/godbus/dbus/v5"
@@ -45,7 +45,7 @@ type (
 	}
 
 	LyricLine struct {
-		Timestamp float64
+		Timestamp time.Duration
 		Text      string
 	}
 )
@@ -66,9 +66,11 @@ func fetchLyrics(url string, uri string) ([]LyricLine, error) {
 
 	if cahcedLyrics, err := loadCache(cacheFile); err == nil {
 		return cahcedLyrics, nil
+	} else {
+		Log(err)
 	}
 
-	Log("Fetching lyrics from LRCLIB")
+	Log("Fetching lyrics from LRCLIB:", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -85,13 +87,8 @@ func fetchLyrics(url string, uri string) ([]LyricLine, error) {
 		return nil, fmt.Errorf("unexpected HTTP status: %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	var resJson LrcLibResponse
-	err = json.Unmarshal(body, &resJson)
+	err = json.NewDecoder(resp.Body).Decode(&resJson)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -129,22 +126,27 @@ func parseLyrics(file string) ([]LyricLine, error) {
 			continue
 		}
 		timestampStr := strings.TrimPrefix(parts[0], "[")
-		lyric := strings.TrimSpace(parts[1])
+		lyricLine := strings.TrimSpace(parts[1])
 
 		timestamp, err := parseTimestamp(timestampStr)
 		if err != nil {
 			continue
 		}
 
-		lyrics = append(lyrics, LyricLine{Timestamp: timestamp, Text: lyric})
+		lyric := LyricLine{
+			Timestamp: timestamp,
+			Text:      lyricLine,
+		}
+
+		lyrics = append(lyrics, lyric)
 	}
 	return lyrics, nil
 }
 
-func parseTimestamp(ts string) (float64, error) {
+func parseTimestamp(ts string) (time.Duration, error) {
 	parts := strings.Split(ts, ":")
 
-	var seconds float64
+	var seconds time.Duration
 
 	for i := len(parts) - 1; i >= 0; i-- {
 		part, err := strconv.ParseFloat(strings.TrimSpace(parts[i]), 64)
@@ -152,7 +154,7 @@ func parseTimestamp(ts string) (float64, error) {
 			return 0, fmt.Errorf("invalid timestamp part: %s", parts[i])
 		}
 
-		seconds += part * math.Pow(60, float64(len(parts)-1-i))
+		seconds += time.Duration(part * math.Pow(60, float64(len(parts)-1-i)) * float64(time.Second))
 	}
 
 	return seconds, nil
@@ -166,7 +168,7 @@ func saveCache(lines []LyricLine, filePath string) error {
 	defer file.Close()
 
 	for _, line := range lines {
-		_, err := fmt.Fprintf(file, "%.6f,%s\n", line.Timestamp, line.Text)
+		_, err := fmt.Fprintf(file, "%d,%s\n", line.Timestamp, line.Text)
 		if err != nil {
 			return err
 		}
@@ -181,7 +183,7 @@ func loadCache(filePath string) ([]LyricLine, error) {
 	}
 	defer file.Close()
 
-	var lines []LyricLine
+	var lyrics []LyricLine
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -191,18 +193,28 @@ func loadCache(filePath string) ([]LyricLine, error) {
 			continue // Skip invalid lines
 		}
 
-		timestamp, err := strconv.ParseFloat(parts[0], 64)
+		timestamp, err := strconv.ParseInt(parts[0], 10, 64)
 		if err != nil {
 			return nil, err
 		}
 
-		lines = append(lines, LyricLine{Timestamp: timestamp, Text: parts[1]})
+		lyric := LyricLine{
+			Timestamp: time.Duration(timestamp),
+			Text:      parts[1],
+		}
+
+		lyrics = append(lyrics, lyric)
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-	return lines, nil
+
+	if len(lyrics) == 0 {
+		return nil, fmt.Errorf("Number of line found is zero.")
+	}
+
+	return lyrics, nil
 }
 
 func truncate(input string, limit int) string {
@@ -319,12 +331,18 @@ var lyricsCmd = &cobra.Command{
 		artist := meta["xesam:artist"].Value().([]string)[0]
 		title := meta["xesam:title"].Value().(string)
 		album := meta["xesam:album"].Value().(string)
-		duration := float64(meta["mpris:length"].Value().(uint64)) / 1000000
-		position, _ := player.GetPosition()
 
 		if title == "" || artist == "" {
 			os.Exit(1)
 		}
+
+		length := time.Duration(meta["mpris:length"].Value().(uint64)) * time.Microsecond
+
+		pos, err := player.GetPosition()
+		if err != nil {
+			os.Exit(1)
+		}
+		position := time.Duration(pos * float64(time.Second))
 
 		if status == "Paused" {
 			encoder.Encode(Lyrics{
@@ -332,7 +350,7 @@ var lyricsCmd = &cobra.Command{
 				Class:      "info",
 				Alt:        "paused",
 				Tooltip:    "",
-				Percentage: int(100 * position / duration),
+				Percentage: int(100 * position / length),
 			})
 			os.Exit(0)
 		}
@@ -347,8 +365,8 @@ var lyricsCmd = &cobra.Command{
 		if album != "" {
 			queryParams.Set("album_name", album)
 		}
-		if duration != 0 {
-			queryParams.Set("duration", fmt.Sprintf("%.1f", duration))
+		if length != 0 {
+			queryParams.Set("duration", fmt.Sprintf("%.2f", length.Seconds()))
 		}
 		params := queryParams.Encode()
 
@@ -362,7 +380,7 @@ var lyricsCmd = &cobra.Command{
 				Text:       fmt.Sprintf("%s - %s", artist, title),
 				Class:      "info",
 				Alt:        "playing",
-				Percentage: int(100 * position / duration),
+				Percentage: int(100 * position / length),
 			})
 			os.Exit(0)
 		}
@@ -403,7 +421,7 @@ var lyricsCmd = &cobra.Command{
 				Class:      "lyric",
 				Alt:        "lyric",
 				Tooltip:    strings.TrimSpace(tooltip.String()),
-				Percentage: int(100 * position / duration),
+				Percentage: int(100 * position / length),
 			})
 			os.Exit(0)
 		}
@@ -413,7 +431,7 @@ var lyricsCmd = &cobra.Command{
 			Class:      "info",
 			Alt:        "playing",
 			Tooltip:    "",
-			Percentage: int(100 * position / duration),
+			Percentage: int(100 * position / length),
 		})
 	},
 }
