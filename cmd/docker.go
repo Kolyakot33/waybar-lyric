@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type (
@@ -102,6 +104,13 @@ func generateSimpleTable(headers []string, rows [][]string) string {
 	return strings.TrimSpace(builder.String())
 }
 
+func toTitle(input string) string {
+	input = strings.ReplaceAll(input, "-", " ")
+	input = strings.ReplaceAll(input, "_", " ")
+
+	return cases.Title(language.English).String(input)
+}
+
 var dockerCmd = &cobra.Command{
 	Use:   "docker",
 	Short: "Docker modules for waybar",
@@ -136,7 +145,8 @@ var dockerCmd = &cobra.Command{
 
 		var tableRows [][]string
 		for _, stat := range stats {
-			tableRows = append(tableRows, []string{stat.Name, stat.CPUPerc, stat.MemPerc})
+			name := toTitle(stat.Name)
+			tableRows = append(tableRows, []string{name, stat.CPUPerc, stat.MemPerc})
 		}
 
 		tooltip := generateSimpleTable([]string{"Name", "CPU", "MEM"}, tableRows)
