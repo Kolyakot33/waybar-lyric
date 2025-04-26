@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -15,9 +16,8 @@ import (
 )
 
 const (
-	SleepTime  = 500 * time.Millisecond
-	PlayerName = "org.mpris.MediaPlayer2.spotify"
-	Version    = "waybar-lyric v0.8.0 (https://github.com/Nadim147c/waybar-lyric)"
+	SleepTime = 500 * time.Millisecond
+	Version   = "waybar-lyric v0.8.0 (https://github.com/Nadim147c/waybar-lyric)"
 )
 
 func truncate(input string) string {
@@ -56,7 +56,24 @@ func main() {
 		return
 	}
 
-	player := mpris.New(conn, PlayerName)
+	// Call ListNames on org.freedesktop.DBus
+	var names []string
+	err = conn.Object("org.freedesktop.DBus", "/org/freedesktop/DBus").
+		Call("org.freedesktop.DBus.ListNames", 0).
+		Store(&names)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Filter MPRIS players
+	var playerName string
+	for _, name := range names {
+		if len(name) >= len("org.mpris.MediaPlayer2.") && name[:len("org.mpris.MediaPlayer2.")] == "org.mpris.MediaPlayer2." {
+			playerName = name
+		}
+	}
+
+	player := mpris.New(conn, playerName)
 
 	if ToggleState {
 		slog.Info("Toggling player state")
